@@ -213,10 +213,29 @@ function getTypeString(typeNode: ts.TypeNode | undefined): string {
     return "unknown"
   }
 
+  // Handle array types like string[], User[]
+  if (ts.isArrayTypeNode(typeNode)) {
+    const elementType = getTypeString(typeNode.elementType)
+    return `${elementType}[]`
+  }
+
+  // Handle type references like User, Date, etc.
   if (ts.isTypeReferenceNode(typeNode) && ts.isIdentifier(typeNode.typeName)) {
     return typeNode.typeName.text
   }
 
+  // Handle union types (basic support for optional types)
+  if (ts.isUnionTypeNode(typeNode)) {
+    // For now, just get the first non-undefined type
+    for (const type of typeNode.types) {
+      if (type.kind !== ts.SyntaxKind.UndefinedKeyword) {
+        return getTypeString(type)
+      }
+    }
+    return "unknown"
+  }
+
+  // Handle primitive types
   switch (typeNode.kind) {
     case ts.SyntaxKind.StringKeyword:
       return "string"
@@ -226,6 +245,12 @@ function getTypeString(typeNode: ts.TypeNode | undefined): string {
       return "boolean"
     case ts.SyntaxKind.AnyKeyword:
       return "any"
+    case ts.SyntaxKind.VoidKeyword:
+      return "void"
+    case ts.SyntaxKind.UndefinedKeyword:
+      return "undefined"
+    case ts.SyntaxKind.NullKeyword:
+      return "null"
     default:
       return "unknown"
   }

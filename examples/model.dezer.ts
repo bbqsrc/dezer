@@ -1,5 +1,16 @@
 import { Blog, Post, User } from "./model.ts"
-import { DESERIALIZE, SERIALIZE } from "@dezer/core"
+import {
+  DESERIALIZE,
+  deserializeNestedObject,
+  deserializeObjectArray,
+  SERIALIZE,
+  validateDate,
+  validateNumber,
+  validateObject,
+  validateObjectArray,
+  validateString,
+  validateStringArray,
+} from "@dezer/core"
 import type { Deserialize, Deserializer, MapAccess, Serialize, Serializer } from "@dezer/core"
 
 declare module "./model.ts" {
@@ -10,12 +21,12 @@ declare module "./model.ts" {
 ;(User.prototype as any)[SERIALIZE] = function (serializer: Serializer) {
   const struct = serializer.serializeStruct("User", 3)
   struct.serializeField("name", this.name)
-  struct.serializeField("email_address", this.email)
   struct.serializeField("age", this.age)
+  struct.serializeField("email_address", this.email)
   struct.end()
 }
 ;(User.prototype as any)[DESERIALIZE] = function (deserializer: Deserializer) {
-  return deserializer.deserializeStruct("User", ["name", "email_address", "age"], {
+  return deserializer.deserializeStruct("User", ["name", "age", "email_address"], {
     expecting() {
       return "struct User"
     },
@@ -27,15 +38,15 @@ declare module "./model.ts" {
         const [key, value] = entry
         switch (key) {
           case "name":
-            instance.name = value as string
-            break
-          case "email_address":
-            instance.email = value as string
+            instance.name = validateString(value, "name")
             break
           case "age":
             if (value !== undefined) {
-              instance.age = value as number
+              instance.age = validateNumber(value, "age")
             }
+            break
+          case "email_address":
+            instance.email = validateString(value, "email")
             break
         }
       }
@@ -99,19 +110,19 @@ declare module "./model.ts" {
         const [key, value] = entry
         switch (key) {
           case "title":
-            instance.title = value as string
+            instance.title = validateString(value, "title")
             break
           case "content":
-            instance.content = value as string
+            instance.content = validateString(value, "content")
             break
           case "author":
-            instance.author = value as User
+            instance.author = deserializeNestedObject(value, User, deserializer, "author")
             break
           case "createdAt":
-            instance.createdAt = new Date(value as string)
+            instance.createdAt = validateDate(value, "createdAt")
             break
           case "tags":
-            instance.tags = value as unknown
+            instance.tags = validateStringArray(value, "tags")
             break
         }
       }
@@ -174,16 +185,16 @@ declare module "./model.ts" {
         const [key, value] = entry
         switch (key) {
           case "name":
-            instance.name = value as string
+            instance.name = validateString(value, "name")
             break
           case "description":
-            instance.description = value as string
+            instance.description = validateString(value, "description")
             break
           case "posts":
-            instance.posts = value as unknown
+            instance.posts = deserializeObjectArray(value, Post, deserializer, "posts")
             break
           case "authors":
-            instance.authors = value as unknown
+            instance.authors = deserializeObjectArray(value, User, deserializer, "authors")
             break
         }
       }

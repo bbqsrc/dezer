@@ -126,6 +126,7 @@ ${fieldMappings.map((fm) => `          ${fm}`).join("\n")}
 function generateFieldMapping(field: ParsedField): string {
   const { propertyName, options, isOptional } = field
   const serializedName = options.name || propertyName
+  const fieldPath = propertyName
 
   if (options.transform?.deserialize) {
     return `case "${serializedName}":
@@ -133,7 +134,7 @@ function generateFieldMapping(field: ParsedField): string {
             break`
   }
 
-  const valueDeserialization = generateValueDeserialization("value", field.type)
+  const valueDeserialization = generateValueDeserialization("value", field.type, fieldPath)
 
   if (isOptional) {
     return `case "${serializedName}":
@@ -148,24 +149,81 @@ function generateFieldMapping(field: ParsedField): string {
   }
 }
 
-function generateValueDeserialization(valueExpression: string, type: string): string {
+function generateValueDeserialization(valueExpression: string, type: string, fieldPath: string): string {
+  // Import validation from our validation module
+  const validationImport = "import { " + getValidationFunctionName(type) + ' } from "@dezer/core"'
+
   switch (type) {
     case "Date":
-      return `new Date(${valueExpression} as string)`
+      return `validateDate(${valueExpression}, "${fieldPath}")`
     case "string":
-      return `${valueExpression} as string`
+      return `validateString(${valueExpression}, "${fieldPath}")`
     case "number":
-      return `${valueExpression} as number`
+      return `validateNumber(${valueExpression}, "${fieldPath}")`
     case "boolean":
-      return `${valueExpression} as boolean`
+      return `validateBoolean(${valueExpression}, "${fieldPath}")`
     default:
       if (type.endsWith("[]")) {
-        // For arrays, assume they're already properly deserialized
-        return `${valueExpression} as ${type}`
+        const elementType = type.slice(0, -2)
+        switch (elementType) {
+          case "string":
+            return `validateStringArray(${valueExpression}, "${fieldPath}")`
+          case "number":
+            return `validateNumberArray(${valueExpression}, "${fieldPath}")`
+          case "boolean":
+            return `validateBooleanArray(${valueExpression}, "${fieldPath}")`
+          default:
+            // For arrays of user-defined objects, deserialize each element
+            if (isUserDefinedType(elementType)) {
+              return `deserializeObjectArray(${valueExpression}, ${elementType}, deserializer, "${fieldPath}")`
+            }
+            // For other complex object arrays, just validate array structure
+            return `validateObjectArray(${valueExpression}, "${fieldPath}") as ${type}`
+        }
       }
-      // For complex objects, assume they need further deserialization
-      // This would need to be handled by the format-specific deserializer
-      return `${valueExpression} as ${type}`
+      // For complex objects, check if they might be user-defined classes that need deserialization
+      if (isUserDefinedType(type)) {
+        return `deserializeNestedObject(${valueExpression}, ${type}, deserializer, "${fieldPath}")`
+      }
+      // For other complex objects, validate it's an object
+      return `validateObject(${valueExpression}, "${fieldPath}") as ${type}`
+  }
+}
+
+function isUserDefinedType(type: string): boolean {
+  // Check if this is a user-defined class (starts with uppercase and isn't a built-in type)
+  const builtInTypes = new Set(["string", "number", "boolean", "Date", "any", "unknown", "void", "undefined", "null"])
+  return type.length > 0 &&
+    type[0] === type[0].toUpperCase() &&
+    !builtInTypes.has(type)
+}
+
+function getValidationFunctionName(type: string): string {
+  if (type.endsWith("[]")) {
+    const elementType = type.slice(0, -2)
+    switch (elementType) {
+      case "string":
+        return "validateStringArray"
+      case "number":
+        return "validateNumberArray"
+      case "boolean":
+        return "validateBooleanArray"
+      default:
+        return "validateObjectArray"
+    }
+  }
+
+  switch (type) {
+    case "string":
+      return "validateString"
+    case "number":
+      return "validateNumber"
+    case "boolean":
+      return "validateBoolean"
+    case "Date":
+      return "validateDate"
+    default:
+      return "validateObject"
   }
 }
 
@@ -194,7 +252,43 @@ function generateImports(parsedClasses: ParsedClass[], sourceFilePath: string): 
   const classNames = parsedClasses.map((cls) => cls.name)
   const relativePath = "./" + sourceFilePath.split("/").pop()
 
+  // Collect all validation functions needed
+  const validationFunctions = new Set<string>()
+  let needsNestedDeserialization = false
+  let needsArrayDeserialization = false
+
+  for (const cls of parsedClasses) {
+    for (const field of cls.fields) {
+      if (!field.isIgnored) {
+        validationFunctions.add(getValidationFunctionName(field.type))
+
+        // Check if we need nested object deserialization
+        if (isUserDefinedType(field.type)) {
+          needsNestedDeserialization = true
+        }
+
+        // Check if we need array object deserialization
+        if (field.type.endsWith("[]")) {
+          const elementType = field.type.slice(0, -2)
+          if (isUserDefinedType(elementType)) {
+            needsArrayDeserialization = true
+          }
+        }
+      }
+    }
+  }
+
+  if (needsNestedDeserialization) {
+    validationFunctions.add("deserializeNestedObject")
+  }
+
+  if (needsArrayDeserialization) {
+    validationFunctions.add("deserializeObjectArray")
+  }
+
+  const validationImports = Array.from(validationFunctions).join(", ")
+
   return `import { ${classNames.join(", ")} } from "${relativePath}"
-import { SERIALIZE, DESERIALIZE } from "@dezer/core"
+import { SERIALIZE, DESERIALIZE, ${validationImports} } from "@dezer/core"
 import type { Serialize, Deserialize, Serializer, Deserializer, MapAccess } from "@dezer/core"`
 }

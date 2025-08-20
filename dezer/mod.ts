@@ -40,6 +40,23 @@ export { SerializationError, serializePrimitive } from "./src/serializer.ts"
 export type { Deserializer, EnumAccess, MapAccess, SeqAccess, Visitor } from "./src/deserializer.ts"
 export { BaseVisitor, DeserializationError, PrimitiveVisitor } from "./src/deserializer.ts"
 
+// Validation utilities (for generated code)
+export {
+  deserializeNestedObject,
+  deserializeObjectArray,
+  validateArray,
+  validateBoolean,
+  validateBooleanArray,
+  validateDate,
+  validateNumber,
+  validateNumberArray,
+  validateObject,
+  validateObjectArray,
+  validateString,
+  validateStringArray,
+  ValidationError,
+} from "./src/validation.ts"
+
 // Decorators for user code
 export { Custom, Field, Ignore, Serializable } from "./src/decorators.ts"
 export type { CustomDeserializer, CustomSerializer, FieldOptions, SerializableOptions } from "./src/types.ts"
