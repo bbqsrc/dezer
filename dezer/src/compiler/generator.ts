@@ -24,7 +24,7 @@ function generateModuleAugmentation(className: string, filePath: string): string
   const relativePath = "./" + filePath.split("/").pop()
 
   return `declare module "${relativePath}" {
-  interface ${className} extends Serialize {
+  interface ${className} extends Serialize, Deserialize {
   }
 }`
 }
@@ -33,7 +33,7 @@ function generateSerializeMethod(className: string, fields: ParsedField[]): stri
   const serializableFields = fields.filter((f) => !f.isIgnored)
   const fieldSerializations = serializableFields.map((field) => generateFieldSerialization(field))
 
-  return `;(${className}.prototype as any)[SERIALIZE] = function(serializer: import("@dezer/core").Serializer) {
+  return `;(${className}.prototype as any)[SERIALIZE] = function(serializer: Serializer) {
   const struct = serializer.serializeStruct("${className}", ${serializableFields.length})
 ${fieldSerializations.map((fs) => `  ${fs}`).join("\n")}
   struct.end()
@@ -74,13 +74,13 @@ function generateDeserializeMethod(className: string, fields: ParsedField[]): st
   const fieldNames = serializableFields.map((f) => `"${f.options.name || f.propertyName}"`)
   const fieldMappings = serializableFields.map((field) => generateFieldMapping(field))
 
-  return `;(${className} as any)[DESERIALIZE] = function(deserializer: import("@dezer/core").Deserializer) {
+  return `;(${className}.prototype as any)[DESERIALIZE] = function(deserializer: Deserializer) {
   return deserializer.deserializeStruct("${className}", [${fieldNames.join(", ")}], {
     expecting() {
       return "struct ${className}"
     },
     
-    visitMap(map: import("@dezer/core").MapAccess) {
+    visitMap(map: MapAccess) {
       const instance = Object.create(${className}.prototype) as ${className}
       let entry
       while ((entry = map.nextEntry()) !== undefined) {
@@ -196,5 +196,5 @@ function generateImports(parsedClasses: ParsedClass[], sourceFilePath: string): 
 
   return `import { ${classNames.join(", ")} } from "${relativePath}"
 import { SERIALIZE, DESERIALIZE } from "@dezer/core"
-import type { Serialize, Deserialize } from "@dezer/core"`
+import type { Serialize, Deserialize, Serializer, Deserializer, MapAccess } from "@dezer/core"`
 }

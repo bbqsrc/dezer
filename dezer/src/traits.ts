@@ -33,17 +33,17 @@ export interface Serialize {
 /**
  * Trait for types that can be deserialized.
  *
- * This trait is implemented as a static method on constructors
+ * This trait is implemented as a method on prototypes
  * and uses a Deserializer with visitor pattern for type-safe parsing.
  */
-export interface Deserialize<T> {
+export interface Deserialize {
   /**
-   * Deserialize a value of type T using the given deserializer.
+   * Deserialize a value using the given deserializer.
    *
    * @param deserializer The format-specific deserializer to use
-   * @returns The deserialized value of type T
+   * @returns The deserialized value of this type
    */
-  [DESERIALIZE]<D extends Deserializer>(deserializer: D): T
+  [DESERIALIZE]<D extends Deserializer>(deserializer: D): this
 }
 
 /**
@@ -54,10 +54,11 @@ export function isSerializable(value: unknown): value is Serialize {
 }
 
 /**
- * Type helper to check if a constructor implements Deserialize trait
+ * Type helper to check if a constructor's prototype implements Deserialize trait
  */
-export function isDeserializable<T>(ctor: unknown): ctor is Deserialize<T> & (new (...args: any[]) => T) {
-  return typeof ctor === "function" && DESERIALIZE in ctor
+export function isDeserializable<T extends Deserialize>(ctor: unknown): ctor is new (...args: any[]) => T {
+  return typeof ctor === "function" && typeof (ctor as any).prototype === "object" &&
+    DESERIALIZE in (ctor as any).prototype
 }
 
 /**
@@ -86,17 +87,17 @@ export function serializeUnknown<S extends Serializer>(value: unknown, serialize
 }
 
 /**
- * Deserialize a value using a constructor that implements Deserialize trait
+ * Deserialize a value using a prototype that implements Deserialize trait
  *
- * @param ctor The constructor that can deserialize the type
+ * @param ctor The constructor whose prototype can deserialize the type
  * @param deserializer The deserializer to use
  * @returns The deserialized value
  */
-export function deserialize<T extends Deserialize<T>, D extends Deserializer>(
+export function deserialize<T extends Deserialize, D extends Deserializer>(
   ctor: new (...args: any[]) => T,
   deserializer: D,
 ): T {
-  return (ctor as any)[DESERIALIZE](deserializer)
+  return (ctor.prototype as T)[DESERIALIZE](deserializer)
 }
 
 /**
@@ -107,12 +108,12 @@ export function deserialize<T extends Deserialize<T>, D extends Deserializer>(
  * @returns The deserialized value
  * @throws Error if the constructor is not deserializable
  */
-export function deserializeUnknown<T, D extends Deserializer>(
+export function deserializeUnknown<T extends Deserialize, D extends Deserializer>(
   ctor: unknown,
   deserializer: D,
 ): T {
   if (isDeserializable<T>(ctor)) {
-    return ctor[DESERIALIZE](deserializer)
+    return (ctor.prototype as T)[DESERIALIZE](deserializer)
   } else {
     throw new Error(`Constructor does not implement Deserialize trait: ${ctor}`)
   }

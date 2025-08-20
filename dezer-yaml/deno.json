@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "exports": "./mod.ts",
   "imports": {
-    "@dezer/core": "../dezer/mod.ts"
+    "@dezer/core": "../dezer/mod.ts",
+    "@std/assert": "https://deno.land/std@0.208.0/assert/mod.ts"
+  },
+  "tasks": {
+    "test": "deno test --allow-read --allow-env tests/"
   },
   "fmt": {
     "lineWidth": 120,

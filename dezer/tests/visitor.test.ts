@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert"
 import { JsonDeserializer, JsonSerializer } from "../../dezer-json/mod.ts"
+import type { Deserialize, Deserializer, MapAccess, Serialize, Serializer } from "../mod.ts"
 import { DESERIALIZE, deserializeUnknown, SERIALIZE, serializeUnknown } from "../mod.ts"
-import type { Deserializer, MapAccess, Serializer } from "../mod.ts"
 
 class TestClass {
   name: string
@@ -11,7 +11,9 @@ class TestClass {
     this.name = name
     this.age = age
   }
-} // Manually implement the serialization for testing
+}
+
+interface TestClass extends Serialize, Deserialize {} // Manually implement the serialization for testing
 
 ;(TestClass.prototype as any)[SERIALIZE] = function (serializer: Serializer) {
   const struct = serializer.serializeStruct("TestClass", 2)
@@ -19,7 +21,7 @@ class TestClass {
   struct.serializeField("age", this.age)
   struct.end()
 }
-;(TestClass as any)[DESERIALIZE] = function (deserializer: Deserializer) {
+;(TestClass.prototype as any)[DESERIALIZE] = function (deserializer: Deserializer) {
   return deserializer.deserializeStruct("TestClass", ["name", "age"], {
     expecting() {
       return "struct TestClass"
@@ -85,7 +87,7 @@ Deno.test("JsonDeserializer - should deserialize objects with visitor pattern", 
   const data = { name: "Jane", age: 25 }
   const deserializer = new JsonDeserializer(data)
 
-  const result = (TestClass as any)[DESERIALIZE](deserializer)
+  const result = (TestClass.prototype as any)[DESERIALIZE](deserializer)
 
   assertEquals(result.name, "Jane")
   assertEquals(result.age, 25)

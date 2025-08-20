@@ -1,11 +1,13 @@
 {
   "tasks": {
     "generate": "deno run --allow-read --allow-write --allow-env ../dezer/cli.ts",
-    "run": "deno run --allow-read --allow-env basic.ts"
+    "run": "deno run --allow-read --allow-env basic.ts",
+    "yaml": "deno run --allow-read --allow-env yaml-example.ts"
   },
   "imports": {
     "@dezer/core": "../dezer/mod.ts",
-    "@dezer/json": "../dezer-json/mod.ts"
+    "@dezer/json": "../dezer-json/mod.ts",
+    "@dezer/yaml": "../dezer-yaml/mod.ts"
   },
   "fmt": {
     "lineWidth": 120,

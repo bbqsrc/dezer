@@ -1,7 +1,10 @@
 import "./dezer.ts"
 
-import { Post, User } from "./model.ts"
 import { fromString, toString } from "@dezer/json"
+import { Post, User } from "./model.ts"
+
+class Foo {
+}
 
 function main() {
   console.log("🧪 Testing Dezer Basic Example with Visitor Pattern")

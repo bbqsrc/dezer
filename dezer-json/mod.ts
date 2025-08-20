@@ -378,7 +378,7 @@ export function toString<T extends Serialize>(value: T): string {
  * @param ctor Constructor that implements Deserialize trait
  * @returns The deserialized value
  */
-export function fromString<T extends Deserialize<T>>(json: string, ctor: new (...args: any[]) => T): T {
+export function fromString<T extends Deserialize>(json: string, ctor: new (...args: any[]) => T): T {
   const data = JSON.parse(json)
   const deserializer = new JsonDeserializer(data)
   return deserialize<T, JsonDeserializer>(ctor, deserializer)

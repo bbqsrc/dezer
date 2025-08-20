@@ -35,10 +35,43 @@ export class Post {
   @Field()
   createdAt: Date
 
-  constructor(title: string, content: string, author: User) {
+  @Field()
+  tags: string[]
+
+  constructor(title: string, content: string, author: User, tags: string[] = []) {
     this.title = title
     this.content = content
     this.author = author
     this.createdAt = new Date()
+    this.tags = tags
+  }
+}
+
+@Serializable()
+export class Blog {
+  @Field()
+  name: string
+
+  @Field()
+  description: string
+
+  @Field()
+  posts: Post[]
+
+  @Field()
+  authors: User[]
+
+  constructor(name: string, description: string) {
+    this.name = name
+    this.description = description
+    this.posts = []
+    this.authors = []
+  }
+
+  addPost(post: Post) {
+    this.posts.push(post)
+    if (!this.authors.find((a) => a.email === post.author.email)) {
+      this.authors.push(post.author)
+    }
   }
 }
