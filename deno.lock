@@ -1,0 +1,40 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/assert@1": "1.0.14",
+    "jsr:@std/cli@*": "1.0.21",
+    "jsr:@std/internal@^1.0.10": "1.0.10",
+    "npm:typescript@5": "5.9.2"
+  },
+  "jsr": {
+    "@std/assert@1.0.14": {
+      "integrity": "68d0d4a43b365abc927f45a9b85c639ea18a9fab96ad92281e493e4ed84abaa4",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/cli@1.0.21": {
+      "integrity": "cd25b050bdf6282e321854e3822bee624f07aca7636a3a76d95f77a3a919ca2a"
+    },
+    "@std/internal@1.0.10": {
+      "integrity": "e3be62ce42cab0e177c27698e5d9800122f67b766a0bea6ca4867886cbde8cf7"
+    }
+  },
+  "npm": {
+    "typescript@5.9.2": {
+      "integrity": "sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==",
+      "bin": true
+    }
+  },
+  "workspace": {
+    "members": {
+      "dezer": {
+        "dependencies": [
+          "jsr:@std/assert@1",
+          "jsr:@std/cli@1",
+          "npm:typescript@5"
+        ]
+      }
+    }
+  }
+}

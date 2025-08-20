@@ -1,0 +1,25 @@
+{
+  "name": "@dezer/core",
+  "version": "0.1.0",
+  "exports": "./mod.ts",
+  "tasks": {
+    "test": "deno test --allow-read --allow-write --allow-env",
+    "generate": "deno run --allow-read --allow-write --allow-env cli.ts",
+    "generate:watch": "deno run --allow-read --allow-write --allow-env --watch cli.ts --watch-mode"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.0",
+    "@std/cli": "jsr:@std/cli@^1.0.0",
+    "typescript": "npm:typescript@^5.0.0"
+  },
+  "fmt": {
+    "lineWidth": 120,
+    "semiColons": false,
+    "singleQuote": false,
+    "useBraces": "always"
+  },
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}

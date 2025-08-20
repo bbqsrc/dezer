@@ -1,0 +1,16 @@
+{
+  "workspace": ["./dezer", "./examples", "./dezer-json", "./dezer-yaml"],
+  "tasks": {
+    "dev": "cd dezer && deno run --watch main.ts",
+    "test": "deno test --allow-read --allow-write --allow-env",
+    "test:dezer": "cd dezer && deno task test",
+    "example": "cd examples && deno task run",
+    "build:dezer": "cd dezer && deno task generate"
+  },
+  "fmt": {
+    "lineWidth": 120,
+    "semiColons": false,
+    "singleQuote": false,
+    "useBraces": "always"
+  }
+}
