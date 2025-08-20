@@ -2,8 +2,9 @@
 
 > [!CAUTION]
 > **DO NOT USE THIS LIBRARY UNDER ANY CIRCUMSTANCES ⚠️**
-> 
-> This is an experimental/educational project and should not be used in production code. I don't trust Claude and neither should you.
+>
+> This is an experimental/educational project and should not be used in production code. I don't trust Claude and
+> neither should you.
 
 A serde-inspired serialization library for TypeScript/Deno featuring the visitor pattern and code generation.
 
@@ -15,7 +16,7 @@ A serde-inspired serialization library for TypeScript/Deno featuring the visitor
 - **🛡️ Type Safety** - Full TypeScript support with compile-time guarantees
 - **⚡ Symbol-based Traits** - No prototype pollution, dependency-safe
 - **🔄 Multiple Formats** - JSON, YAML, and easily extensible to more
-- **🎨 Decorator API** - Clean, ergonomic syntax with `@Serializable()` and `@Field()`
+- **🎨 Minimal Decorator API** - Auto-serialization by default, decorators only when needed
 - **⚙️ CLI Integration** - Watch mode and development workflow support
 
 ## 📋 Table of Contents
@@ -43,9 +44,14 @@ import { Field, Serializable } from "jsr:@dezer/core"
 // JSON support
 import { fromString, toString } from "jsr:@dezer/json"
 
-// YAML support  
+// YAML support
 import { fromYaml, toYaml } from "jsr:@dezer/yaml"
 ```
+
+### Requirements
+
+- **TypeScript 5.0+** for standard decorator support
+- **Deno 1.32+** recommended
 
 ### CLI Tool
 
@@ -66,21 +72,18 @@ Add to your `deno.json`:
 
 ```typescript
 // model.ts
-import { Field, Serializable } from "@dezer/core"
+import { Field, Ignore, Serializable } from "@dezer/core"
 
-@Serializable()
+@Serializable
 export class User {
-  @Field()
-  name: string
+  name: string // ✅ Serialized automatically as "name"
+  age?: number // ✅ Serialized automatically as "age"
 
-  @Field({ name: "email_address" })
+  @Field({ name: "email_address" }) // 🎯 Custom field name
   email: string
 
-  @Field({ skip: true })
+  @Ignore // ❌ Skip this field
   password: string
-
-  @Field()
-  age?: number
 
   constructor(name: string, email: string, password: string) {
     this.name = name
@@ -89,18 +92,11 @@ export class User {
   }
 }
 
-@Serializable()
+@Serializable
 export class Post {
-  @Field()
-  title: string
-
-  @Field()
+  title: string // ✅ All fields serialized by default
   content: string
-
-  @Field()
   author: User
-
-  @Field()
   createdAt: Date = new Date()
 
   constructor(title: string, content: string, author: User) {
@@ -123,9 +119,9 @@ This creates `model.dezer.ts` with generated visitor pattern implementations.
 
 ```typescript
 // main.ts
-import "./model.dezer.ts"  // Import generated code
+import "./model.dezer.ts" // Import generated code
 import { fromString, toString } from "@dezer/json"
-import { User, Post } from "./model.ts"
+import { Post, User } from "./model.ts"
 
 const user = new User("John Doe", "john@example.com", "secret123")
 user.age = 30
@@ -137,7 +133,7 @@ const json = toString(post)
 console.log(json)
 // Output: {"title":"Hello World","content":"My first post!","author":{"name":"John Doe","email_address":"john@example.com","age":30},"createdAt":"2024-01-15T10:30:00.000Z"}
 
-// Deserialize from JSON  
+// Deserialize from JSON
 const restored = fromString(json, Post)
 console.log(restored.author.name) // "John Doe"
 ```
@@ -155,7 +151,7 @@ interface Serialize {
 }
 
 // Generated implementation
-User.prototype[SERIALIZE] = function(serializer: Serializer) {
+User.prototype[SERIALIZE] = function (serializer: Serializer) {
   const struct = serializer.serializeStruct("User", 3)
   struct.serializeField("name", this.name)
   struct.serializeField("email_address", this.email)
@@ -198,42 +194,57 @@ class JsonSerializer implements Serializer {
 
 ### Decorators
 
-#### `@Serializable()`
+#### `@Serializable`
 
-Marks a class for serialization code generation.
+Marks a class for serialization code generation. **All public fields are automatically serialized by default.**
 
 ```typescript
-@Serializable()
+@Serializable
 class MyClass {
+  name: string // ✅ Automatically serialized
+  id: number // ✅ Automatically serialized
   // ...
 }
 ```
 
-#### `@Field(options?)`
+#### `@Field(options?)` _(Optional)_
 
-Configures field serialization:
+**Only needed when you want to customize field behavior.** By default, all fields are serialized with their original
+names.
 
 ```typescript
 interface FieldOptions {
-  name?: string              // Custom field name in output
-  skip?: boolean            // Skip in both serialization/deserialization  
+  name?: string // Custom field name in output
+  skip?: boolean // Skip in both serialization/deserialization
   skipSerializing?: boolean // Skip only during serialization
   skipDeserializing?: boolean // Skip only during deserialization
-  required?: boolean        // Field is required during deserialization
-  default?: unknown         // Default value if missing
+  required?: boolean // Field is required during deserialization
+  default?: unknown // Default value if missing
 }
 
-@Field({ name: "custom_name", skip: false })
-myProperty: string
+// Examples of when you need @Field:
+class User {
+  name: string // ✅ No decorator needed
+
+  @Field({ name: "email_address" }) // 🎯 Rename field in output
+  email: string
+
+  @Field({ skip: true }) // ❌ Skip this field
+  password: string
+}
 ```
 
-#### `@Ignore`
+#### `@Ignore` _(Optional)_
 
-Shorthand for `@Field({ skip: true })`:
+Shorthand for `@Field({ skip: true })`. Excludes field from serialization/deserialization:
 
 ```typescript
-@Ignore
-sensitiveData: string
+class MyClass {
+  publicData: string // ✅ Serialized automatically
+
+  @Ignore // ❌ Not serialized
+  sensitiveData: string
+}
 ```
 
 ### Core Functions
@@ -242,17 +253,17 @@ sensitiveData: string
 // Type-safe serialization
 function serialize<S extends Serializer>(value: Serialize, serializer: S): void
 
-// Type-safe deserialization  
+// Type-safe deserialization
 function deserialize<T extends Deserialize, D extends Deserializer>(
   ctor: new (...args: any[]) => T,
-  deserializer: D
+  deserializer: D,
 ): T
 
 // Runtime checks
 function serializeUnknown<S extends Serializer>(value: unknown, serializer: S): void
 function deserializeUnknown<T extends Deserialize, D extends Deserializer>(
   ctor: unknown,
-  deserializer: D
+  deserializer: D,
 ): T
 ```
 
@@ -327,7 +338,7 @@ OPTIONS:
 Full JSON support with UTF-8 byte arrays:
 
 ```typescript
-import { fromString, toString, fromBytes, toBytes } from "@dezer/json"
+import { fromBytes, fromString, toBytes, toString } from "@dezer/json"
 
 const user = new User("Alice", "alice@example.com", "secret")
 
@@ -355,7 +366,7 @@ database:
   host: localhost
   port: 5432
 server:
-  host: 0.0.0.0  
+  host: 0.0.0.0
   port: 8080
 */
 
@@ -368,7 +379,7 @@ Create a new format by implementing the serializer interfaces:
 
 ```typescript
 // my-format/mod.ts
-import type { Serializer, Deserializer } from "@dezer/core"
+import type { Deserializer, Serializer } from "@dezer/core"
 
 export class MyFormatSerializer implements Serializer {
   serializeStruct(name: string, len: number) {
@@ -466,12 +477,12 @@ class Customer {
 ### Multiple Format Usage
 
 ```typescript
-import { toString as toJson, fromString as fromJson } from "@dezer/json"
-import { toYaml, fromYaml } from "@dezer/yaml"
+import { fromString as fromJson, toString as toJson } from "@dezer/json"
+import { fromYaml, toYaml } from "@dezer/yaml"
 
 const customer = new Customer(
   "John Doe",
-  new Address("123 Main St", "Anytown", "12345")
+  new Address("123 Main St", "Anytown", "12345"),
 )
 
 // Same object, different formats
@@ -552,7 +563,7 @@ From this input:
 class User {
   @Field()
   name: string
-  
+
   @Field({ name: "email_address" })
   email: string
 }
@@ -563,27 +574,26 @@ Dezer generates:
 ```typescript
 // model.dezer.ts
 import { User } from "./model.ts"
-import { SERIALIZE, DESERIALIZE } from "@dezer/core"
-import type { Serialize, Deserialize, Serializer, Deserializer, MapAccess } from "@dezer/core"
+import { DESERIALIZE, SERIALIZE } from "@dezer/core"
+import type { Deserialize, Deserializer, MapAccess, Serialize, Serializer } from "@dezer/core"
 
 declare module "./model.ts" {
   interface User extends Serialize, Deserialize {
   }
 }
 
-;(User.prototype as any)[SERIALIZE] = function(serializer: Serializer) {
+;(User.prototype as any)[SERIALIZE] = function (serializer: Serializer) {
   const struct = serializer.serializeStruct("User", 2)
   struct.serializeField("name", this.name)
   struct.serializeField("email_address", this.email)
   struct.end()
 }
-
-;(User.prototype as any)[DESERIALIZE] = function(deserializer: Deserializer) {
+;(User.prototype as any)[DESERIALIZE] = function (deserializer: Deserializer) {
   return deserializer.deserializeStruct("User", ["name", "email_address"], {
     expecting() {
       return "struct User"
     },
-    
+
     visitMap(map: MapAccess) {
       const instance = Object.create(User.prototype) as User
       let entry
@@ -600,11 +610,10 @@ declare module "./model.ts" {
       }
       return instance
     },
-    
+
     visitNull() {
       throw new Error("Expected struct User, found null")
     },
-    
     // ... other visitor methods with error messages
   })
 }

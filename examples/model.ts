@@ -1,17 +1,14 @@
 import { Field, Ignore, Serializable } from "@dezer/core"
 
-@Serializable()
+@Serializable
 export class User {
-  @Field()
   name: string
+  age?: number
 
   @Field({ name: "email_address" })
   email: string
 
-  @Field({ required: false })
-  age?: number
-
-  @Ignore()
+  @Ignore
   password: string
 
   constructor(name: string, email: string, password: string = "") {
@@ -21,21 +18,12 @@ export class User {
   }
 }
 
-@Serializable()
+@Serializable
 export class Post {
-  @Field()
   title: string
-
-  @Field()
   content: string
-
-  @Field()
   author: User
-
-  @Field()
   createdAt: Date
-
-  @Field()
   tags: string[]
 
   constructor(title: string, content: string, author: User, tags: string[] = []) {
@@ -47,18 +35,11 @@ export class Post {
   }
 }
 
-@Serializable()
+@Serializable
 export class Blog {
-  @Field()
   name: string
-
-  @Field()
   description: string
-
-  @Field()
   posts: Post[]
-
-  @Field()
   authors: User[]
 
   constructor(name: string, description: string) {

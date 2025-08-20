@@ -19,7 +19,5 @@
     "useBraces": "always"
   },
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
   }
 }

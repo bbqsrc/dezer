@@ -2,6 +2,11 @@ export interface FieldOptions {
   name?: string
   required?: boolean
   default?: unknown
+  skip?: boolean
+  skipSerializing?: boolean
+  skipDeserializing?: boolean
+  customSerializer?: CustomSerializer
+  customDeserializer?: CustomDeserializer
   transform?: {
     serialize: (value: unknown) => unknown
     deserialize: (value: unknown) => unknown
