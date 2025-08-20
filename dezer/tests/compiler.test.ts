@@ -74,9 +74,9 @@ Deno.test("Generator - should generate serialize method", () => {
   const result = generateSerializationCode(parsedClass)
 
   assertEquals(typeof result, "string")
-  assertEquals(result.includes("User.prototype as any)[SERIALIZE]"), true)
+  assertEquals(result.includes("Object.defineProperty(User.prototype, $dezer.SERIALIZE"), true)
   assertEquals(result.includes("email_address"), true)
-  assertEquals(result.includes("User.prototype as any)[DESERIALIZE]"), true)
+  assertEquals(result.includes("Object.defineProperty(User.prototype, $dezer.DESERIALIZE"), true)
   assertEquals(result.includes("serializeStruct"), true)
   assertEquals(result.includes("deserializeStruct"), true)
   assertEquals(result.includes("extends Serialize, Deserialize"), true)
