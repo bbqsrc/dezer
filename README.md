@@ -28,7 +28,6 @@ A serde-inspired serialization library for TypeScript/Deno featuring the visitor
 - [Supported Formats](#supported-formats)
 - [Examples](#examples)
 - [Architecture](#architecture)
-- [Contributing](#contributing)
 
 ## 🔧 Installation
 
@@ -625,40 +624,3 @@ deno task test:dezer
 # Specific test file
 deno test dezer/tests/visitor.test.ts
 ```
-
-## 🤝 Contributing
-
-1. **Adding New Formats**
-   - Create a new workspace package (e.g., `dezer-msgpack/`)
-   - Implement `Serializer` and `Deserializer` interfaces
-   - Add format-specific helper functions
-   - Include comprehensive tests
-
-2. **Core Development**
-   - Follow the visitor pattern architecture
-   - Maintain format independence in core library
-   - Add tests for new decorators or features
-   - Update generated code to match new patterns
-
-3. **Development Workflow**
-   ```bash
-   # Install dependencies
-   deno cache dezer/mod.ts
-   
-   # Run tests in watch mode
-   deno task test --watch
-   
-   # Generate code for examples
-   cd examples && deno task generate:watch
-   
-   # Run examples
-   deno task example
-   ```
-
-## 📜 License
-
-MIT License - see LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-Inspired by Rust's [serde](https://serde.rs/) library, bringing the same powerful visitor pattern architecture to TypeScript/Deno with modern tooling and type safety.
